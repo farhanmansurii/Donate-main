@@ -7,6 +7,7 @@ import styled from 'styled-components';
 import { DollarOutlined, ShareAltOutlined, UserAddOutlined } from '@ant-design/icons';
 import { Theme } from './Theme';
 import { Audio, RotatingLines } from 'react-loader-spinner';
+import { Progress } from 'antd';
 
 
 const StickyBottomBar = styled.div`
@@ -316,13 +317,23 @@ const DonateDetails = ({ match }) => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const handleShare = () => {
+    const handleShare = async () => {
+        if (!campaign) {
+            alert('Campaign data is not available.');
+            return;
+        }
+
         if (navigator.share) {
-            navigator.share({
-                title: campaign.title,
-                text: `Check out this fundraising campaign: ${campaign.title}`,
-                url: window.location.href,
-            })
+            try {
+                await navigator.share({
+                    title: campaign.title,
+                    text: `Check out this fundraising campaign: ${campaign.title}`,
+                    url: window.location.href,
+                });
+            } catch (error) {
+                console.error('Error sharing the campaign:', error);
+
+            }
         } else {
             alert('Web Share API is not supported in your browser. You can manually copy the URL to share.');
         }
@@ -374,7 +385,19 @@ const DonateDetails = ({ match }) => {
             </ResponsiveContainer>
         );
     }
+    const MobileOnlyComponent = styled.div`
+  display: none;
 
+  @media (max-width: 768px) {
+    display: block;
+  }
+`;
+    const NonMobileComponent = styled.div`
+ display: block;
+  @media (max-width: 768px) {
+ display: none;
+  }
+`;
     return (
         <ResponsiveContainer fluid style={{ backgroundColor: Theme.background, color: Theme.text, padding: '20px' }}>
             <PageContainer>
@@ -410,10 +433,28 @@ const DonateDetails = ({ match }) => {
                                         const percent = (campaign.amountRaised / campaign.goal) * 100;
                                         return (
                                             <>
-                                                <ProgressBar>
-                                                    <ProgressFill percent={percent} />
-                                                </ProgressBar>
-                                                <p style={{ color: Theme.primary, fontFamily: Theme.fontPrimary, marginTop: '5px' }}>
+                                                <MobileOnlyComponent>
+
+                                                        <Progress
+                                                            showInfo={false}
+                                                            type="circle"
+                                                            strokeWidth={20}
+                                                            strokeColor={Theme.primary}
+                                                            percent={percent}
+                                                            width={60}
+
+
+                                                        />
+<br/>
+<br/>
+                                                </MobileOnlyComponent>
+
+                                                <NonMobileComponent>
+                                                    <ProgressBar>
+                                                        <ProgressFill percent={percent} />
+                                                    </ProgressBar>
+                                                </NonMobileComponent>
+                                                <p style={{ color: 'primary', fontFamily: 'fontPrimary', marginTop: '5px' }}>
                                                     ${campaign.amountRaised} raised of ${campaign.goal} goal
                                                 </p>
                                             </>
@@ -454,9 +495,16 @@ const DonateDetails = ({ match }) => {
                                         />
                                     </Form.Group>
 
-                                    <StyledButton onClick={handleDonate}>
-                                        Donate
-                                    </StyledButton>
+                                    <div style={{ display: 'flex', flexDirection: 'row' }}>
+                                        <ActionButton primary onClick={handleDonate}>
+                                            <DollarOutlined /> Donate
+                                        </ActionButton>
+                                        <ActionButton onClick={handleShare}>
+                                            <ShareAltOutlined /> Share
+                                        </ActionButton>
+                                    </div>
+
+
                                 </StyledForm>
                             </DonationCard>
                         </FlexContainer>
